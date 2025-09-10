@@ -31,7 +31,6 @@ int main()
         win = mlx_new_window(mlx_ptr, 800, 600, "cub3D");
         img = mlx_new_image(mlx_ptr, 800, 600);
         addr = mlx_get_data_addr(img, &bpp, &line_len, &endian);
-
         mlx_loop(mlx_ptr);
 
 

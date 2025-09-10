@@ -3,7 +3,7 @@
 
 #include "get_next_line.h"
 #include <stdio.h>
-#include <mlx.h>
+#include <parsing/MLX42.h>
 #include <string.h> 
 #include <stdlib.h>
 
@@ -15,10 +15,12 @@ typedef struct s_player {
     double dir_y;
     double plane_x;
     double plane_y;
+    double camera_x;
 } t_player;
 
 typedef struct s_utils
 {
+    int tile;
     int *c_color;
     int *f_color;
     char **map;
@@ -32,7 +34,8 @@ typedef struct s_mlx_helper
 {
     void *mlx_ptr;
     void *win;
-    void *img;
+    mlx_image_t  *img;
+    mlx_image_t *mlx_img;
     char *addr;
     int bpp;
     int line_len;
@@ -44,6 +47,9 @@ typedef struct s_mlx_helper
 } t_mlx_helper;
 
 
+
+#define SCREEN_WIDTH 1000
+#define SCREEN_HEIGHT 1000
 
 
 void print_error(int fd);
