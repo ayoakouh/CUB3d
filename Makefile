@@ -14,7 +14,7 @@ MLX_FLAG = -lglfw -framework Cocoa -framework OpenGL -framework IOKit
 all: ${NAME}
 
 ${NAME}: ${OBJ} ${LIB_MLX}
-	cc ${FLAGS} ${MLX_FLAG} -fsanitize=address -g ${OBJ} ${LIB_MLX} -o $@
+	cc ${FLAGS} ${MLX_FLAG} -g -fsanitize=address  ${OBJ} ${LIB_MLX} -o $@
 
 %.o: %.c cub3d.h
 	cc ${FLAGS} -fsanitize=address -g -c $< -o $@

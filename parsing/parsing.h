@@ -4,8 +4,15 @@
 #include "get_next_line.h"
 #include <stdio.h>
 #include <parsing/MLX42.h>
-#include <string.h> 
+#include <string.h>
 #include <stdlib.h>
+#include<math.h>
+
+
+// #define MLX_KEY_W 13
+// #define MLX_KEY_S 1
+// #define MLX_KEY_A 0
+// #define MLX_KEY_D 2
 
 
 typedef struct s_player {
@@ -13,13 +20,22 @@ typedef struct s_player {
     double pos_y;
     double dir_x;
     double dir_y;
+    double deltaX;
+    double deltaY;
+    double raydir_x;
+    double raydir_y;
+    double move_speed;
     double plane_x;
+    double fov_angle;
+    double rotation_angle;
     double plane_y;
     double camera_x;
+    int side_flag;
 } t_player;
 
 typedef struct s_utils
 {
+    int is_hit;
     int tile;
     int *c_color;
     int *f_color;
@@ -32,6 +48,8 @@ typedef struct s_utils
 
 typedef struct s_mlx_helper
 {
+    t_utils *utils;
+    t_player *player;
     void *mlx_ptr;
     void *win;
     mlx_image_t  *img;
@@ -50,6 +68,7 @@ typedef struct s_mlx_helper
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
+#define PI 3.14
 
 
 void print_error(int fd);
