@@ -18,6 +18,8 @@
 typedef struct s_player {
     double pos_x;
     double pos_y;
+    int mapX;
+    int mapY;
     double dir_x;
     double dir_y;
     double deltaX;
@@ -50,6 +52,11 @@ typedef struct s_mlx_helper
 {
     t_utils *utils;
     t_player *player;
+    double dist_to_wall;
+    int stepX;
+    int stepY;
+    double dist_rayX;
+    double dist_rayY;
     void *mlx_ptr;
     void *win;
     mlx_image_t  *img;
@@ -99,5 +106,6 @@ void free_split(char **split);
 void extract_and_pars_the_texture(t_utils *util, char **file);
 void	*ft_memcpy(void *dest, const void *src, size_t n);
 int	ft_isdigit(int c);
+int check_hit(t_mlx_helper *mlx);
 
 #endif

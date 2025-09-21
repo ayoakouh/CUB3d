@@ -6,12 +6,132 @@
 /*   By: ayoakouh <ayoakouh@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/18 17:56:36 by ayoakouh          #+#    #+#             */
-/*   Updated: 2025/09/18 17:56:41 by ayoakouh         ###   ########.fr       */
+/*   Updated: 2025/09/21 16:52:47 by ayoakouh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "parsing.h"
+void rotate_right(t_mlx_helper *mlx, t_player *player)
+{
+    double old_dirx;
+    double old_planex;
+    double speed_rot;
 
+    speed_rot = -0.1; // Negative for right rotation
+    old_dirx = player->dir_x;
+    old_planex = player->plane_x;
+
+    player->dir_x = player->dir_x * cos(speed_rot) - player->dir_y * sin(speed_rot);
+    player->dir_y = old_dirx * sin(speed_rot) + player->dir_y * cos(speed_rot);
+    
+    player->plane_x = player->plane_x * cos(speed_rot) - player->plane_y * sin(speed_rot);
+    player->plane_y = old_planex * sin(speed_rot) + player->plane_y * cos(speed_rot);
+}
+void    raycast(t_mlx_helper *mlx_utils, t_utils *utils, t_player *player)
+{
+    int x = 0;
+    int y = 0;
+    int side = 0;
+    // clear_img(mlx_utils);
+    while(x < SCREEN_WIDTH)
+    {
+        player->camera_x = 2 * x / SCREEN_WIDTH - 1;
+        player->raydir_x = player->dir_x + player->plane_x * player->camera_x;
+        player->raydir_y = player->dir_y + player->plane_y * player->camera_x;
+        player->mapX = (int)player->pos_x;
+        player->mapY = (int)player->pos_y;
+        if(player->raydir_x == 0)
+            player->deltaX = 1e30;
+        else
+            player->deltaX = fabs(1 / player->raydir_x);
+        
+        if(player->raydir_y == 0)
+            player->deltaY = 1e30;
+        else
+            player->deltaY = fabs(1 / player->raydir_y);
+        if(player->raydir_x < 0)
+        {
+            mlx_utils->stepX = -1;
+            mlx_utils->dist_rayX = (player->pos_x - player->mapX) * player->deltaX;
+        }
+        else if(player->raydir_x >= 0)
+        {
+            mlx_utils->stepX = 1;
+            mlx_utils->dist_rayX = (player->mapX + 1.0 - player->pos_x) * player->deltaX;
+        }
+        if(player->raydir_y < 0)
+        {
+            mlx_utils->stepY = -1;
+            mlx_utils->dist_rayY = (player->pos_y - player->mapY) * player->deltaY;
+        }
+        else if(player->raydir_y >= 0)
+        {
+            mlx_utils->stepY = +1;
+            mlx_utils->dist_rayY = (player->mapY + 1.0 - player->pos_y) * player->deltaY;
+        }
+        side  = check_hit(mlx_utils);
+        if(side == 0)
+            mlx_utils->dist_to_wall = mlx_utils->dist_rayX - player->deltaX;
+        else
+            mlx_utils->dist_to_wall = mlx_utils->dist_rayY - player->deltaY;
+    int lineHeight = (int)(SCREEN_HEIGHT / mlx_utils->dist_to_wall);
+    int drawStart = -lineHeight / 2 + SCREEN_HEIGHT / 2;
+    int drawEnd = lineHeight / 2 + SCREEN_HEIGHT / 2;
+    if(drawStart < 0) drawStart = 0;
+    if(drawEnd >= SCREEN_HEIGHT) drawEnd = SCREEN_HEIGHT - 1;
+    
+    for(int y = drawStart; y < drawEnd; y++) {
+        mlx_put_pixel(mlx_utils->img, x, y, 0xFFFFFF);
+    }
+        x++;
+    }
+    // printf("%f\n", mlx_utils->dist_to_wall);
+}   
+
+void rotate_left(t_mlx_helper *mlx, t_player *player)
+{
+    double  old_dirx;
+    double  old_planex;
+    double speed_rot;
+
+    speed_rot = 0.1;
+    old_dirx = player->dir_x;
+    old_planex = player->plane_x;
+
+    player->dir_x = player->dir_x * cos(speed_rot) - player->dir_y * sin(speed_rot);
+    player->dir_y = old_dirx * sin(speed_rot) + player->dir_y * cos(speed_rot);
+    
+    player->plane_x = player->plane_x * cos(speed_rot) - player->plane_y * sin(speed_rot);
+    player->plane_y = old_planex * sin(speed_rot) + player->plane_y * cos(speed_rot);
+}
+
+void move_left(t_player *player, char **map, t_mlx_helper *mlx)
+{
+    double new_x = player->pos_x - player->dir_y * player->move_speed;
+    double new_y = player->pos_y + player->dir_x * player->move_speed;
+    
+    if (map[(int)player->pos_y][(int)new_x] != '1')
+        player->pos_x = new_x;
+    if (map[(int)new_y][(int)player->pos_x] != '1')
+        player->pos_y = new_y;
+        
+    mlx->mlx_img->instances[0].x = (int)(player->pos_x * mlx->tail);
+    mlx->mlx_img->instances[0].y = (int)(player->pos_y * mlx->tail);
+}
+
+void move_right(t_player *player, char **map, t_mlx_helper *mlx)
+{
+    double new_x = player->pos_x + player->dir_y * player->move_speed;
+    double new_y = player->pos_y - player->dir_x * player->move_speed;
+    
+    if (map[(int)player->pos_y][(int)new_x] != '1')
+        player->pos_x = new_x;
+    if (map[(int)new_y][(int)player->pos_x] != '1')
+        player->pos_y = new_y;
+        
+    // mlx->mlx_img->instances[0].x = (int)(player->pos_x * mlx->tail);
+    // mlx->mlx_img->instances[0].y = (int)(player->pos_y * mlx->tail);
+}
 char find_player(char **map, int *player_place)
 {
     int i = 0;
@@ -205,6 +325,7 @@ void move_forward(t_player *player, char **map, t_mlx_helper *mlx)
 //     draw_player(mlx, player);
 //     mlx_image_to_window(mlx->mlx_ptr,mlx->mlx_img, new_x * mlx->tail, new_y * mlx->tail);
 // }
+
 void move_back(t_player *player, char **map, t_mlx_helper *mlx)
 {
     double new_x = player->pos_x - player->dir_x * player->move_speed;
@@ -217,74 +338,75 @@ void move_back(t_player *player, char **map, t_mlx_helper *mlx)
     mlx->mlx_img->instances[0].x = (int)(player->pos_x * mlx->tail);
     mlx->mlx_img->instances[0].y = (int)(player->pos_y * mlx->tail);
 }
-void *handel_key( mlx_key_data_t keydata,void *param)
+// void *handel_key( mlx_key_data_t keydata,void *param)
+// {
+//     t_mlx_helper *mlx = (t_mlx_helper *)param;
+//     if(keydata.action == MLX_PRESS)
+//     {
+//         if(keydata.key == MLX_KEY_W)
+//             move_forward(mlx->player, mlx->utils->map, mlx);
+//         if(keydata.key == MLX_KEY_S)
+//             move_back(mlx->player, mlx->utils->map, mlx);
+//         if(keydata.key == MLX_KEY_A)
+//             move_left(mlx->player, mlx->utils->map, mlx);
+//         if(keydata.key == MLX_KEY_D)
+//             move_right(mlx->player, mlx->utils->map, mlx);
+//         raycast(mlx, mlx->utils, mlx->player);
+//     }
+//         return NULL;
+// }
+
+void *handel_key(mlx_key_data_t keydata, void *param)
 {
     t_mlx_helper *mlx = (t_mlx_helper *)param;
-    if(keydata.key == MLX_KEY_W)
-        move_forward(mlx->player, mlx->utils->map, mlx);
-    if(keydata.key == MLX_KEY_S)
-        move_back(mlx->player, mlx->utils->map, mlx);
-    // if(key == MLX_KEY_A)
-    //     move_left(player, map);
-    // if(key == MLX_KEY_D)
-    //     move_right(player, map);
-        return NULL;
+    
+    if(keydata.action == MLX_PRESS)
+    {
+        if(keydata.key == MLX_KEY_W)
+            move_forward(mlx->player, mlx->utils->map, mlx);
+        if(keydata.key == MLX_KEY_S)
+            move_back(mlx->player, mlx->utils->map, mlx);
+        if(keydata.key == MLX_KEY_A)
+            move_left(mlx->player, mlx->utils->map, mlx);
+        if(keydata.key == MLX_KEY_D)
+            move_right(mlx->player, mlx->utils->map, mlx);
+        
+        // Add rotation controls
+        if(keydata.key == MLX_KEY_LEFT)
+            rotate_left(mlx, mlx->player);
+        if(keydata.key == MLX_KEY_RIGHT)
+            rotate_right(mlx, mlx->player);
+            
+        // Clear the image before redrawing
+        // clear_img(mlx); // Uncomment if you have a proper clear function
+        
+        raycast(mlx, mlx->utils, mlx->player);
+    }
+    return NULL;
 }
-// void check_hit_with_dda(int distX, int distY, int stepX, int stepY, t_utils *helper, t_player player, int mapx, int mapy)
-// {
-//     while(helper->is_hit == 0)
-//     {
-//         if(distX < distY)
-//         {
-//             distX += player.deltaX;
-//             mapx += stepX;
-//             player.side_flag = 0;
-//         }
-//         else
-//         {
-//             distY += player.deltaY;
-//             mapy += stepY;
-//             player.side_flag = 1;
-//         }
-//         if(helper->map[mapy][mapx] > 0)
-//             helper->is_hit = 1;
-//     }
-// }
-// void    raycast(t_mlx_helper *mlx_utils, t_utils *utils, t_player player)
-// {
-//     int x = 0;
-//     int y = 0;
-//     int Deltax = 0;
-//     int Deltay = 0;
-//     int distX = 0;
-//     int distY = 0;
-//     int stepX = 0;
-//     int stepY = 0;
-//     int map_x = (int)player.pos_x;
-//     int map_y = (int)player.pos_y;
-//         player.camera_x = 2 * x / SCREEN_WIDTH - 1;
-//         player.raydir_x = player.dir_x + player.plane_x * player.camera_x;
-//         player.raydir_y = player.dir_y + player.plane_y * player.camera_x;
-//         if(player.raydir_x != 0 && player.raydir_y != 0)
-//         {
-//             player.deltaX = abs(1 / player.raydir_x);
-//             player.deltaY = abs(1 / player.raydir_y);
-//         }
-//         if(player.raydir_x < 0)
-//         {
-//             stepX = -1;
-//             stepY = -1;
-//             distX = (player.pos_x - map_x) * player.deltaX;
-//             distY = (player.pos_y - map_y) * player.deltaY;
-//         }
-//         if(player.raydir_x >= 0)
-//         {
-//             stepX = 1;
-//             stepY = 1;
-//             distX = (map_x + 1.0 - player.pos_x) * player.deltaX;
-//             distY = (map_y + 1.0 - player.pos_y) * player.deltaY;
-//         }
-// }
+int check_hit(t_mlx_helper *mlx)
+{
+    int hit  = 0;
+    int side = 0;
+    while(hit ==  0)
+    {
+        if(mlx->dist_rayX < mlx->dist_rayY)
+        {
+            mlx->dist_rayX += mlx->player->deltaX;
+            mlx->player->mapX += mlx->stepX;
+            side = 0;
+        }
+        else
+        {
+            mlx->dist_rayY += mlx->player->deltaY;
+            mlx->player->mapY += mlx->stepY;
+            side = 1;
+        }
+        if(mlx->utils->map[mlx->player->mapY][mlx->player->mapX] == '1')
+            hit = 1;
+    }
+    return (side);
+}
 
 int main(int argc, char *argv[])
 {
@@ -319,12 +441,10 @@ int main(int argc, char *argv[])
     mlx_image_to_window(mlx_utils->mlx_ptr, mlx_utils->img, 0, 0);
     mlx_image_to_window(mlx_utils->mlx_ptr, mlx_utils->mlx_img,
     (int)player.pos_x * mlx_utils->tail,
-    (int)player.pos_y * mlx_utils->tail );
-
+    (int)player.pos_y * mlx_utils->tail);
     check_derction_player(&player, helper);
-    // raycast(mlx_utils, util, player);
+    raycast(mlx_utils, util, &player);
     mlx_key_hook(mlx_utils->mlx_ptr, handel_key, mlx_utils);
-    
     mlx_loop( mlx_utils->mlx_ptr);
 }
 
