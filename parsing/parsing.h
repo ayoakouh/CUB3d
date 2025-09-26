@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   parsing.h                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ayoakouh <ayoakouh@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/26 12:42:17 by ayoakouh          #+#    #+#             */
+/*   Updated: 2025/09/26 14:38:17 by ayoakouh         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef PARSING_H
 # define PARSING_H
 
@@ -13,6 +25,20 @@
 // #define MLX_KEY_S 1
 // #define MLX_KEY_A 0
 // #define MLX_KEY_D 2
+
+
+
+#define FIRE_FRAMES 5
+
+typedef struct s_sprite
+{
+    xpm_t    *frames[FIRE_FRAMES];  // mlx image pointers
+    mlx_image_t *images[FIRE_FRAMES];  // actual mlx images to draw
+    int     current_frame;         // index of current frame
+    int     frame_delay;           // how many loops before switching
+    int     frame_counter;         // counts frames
+    double      last_frame_time;
+}   t_sprite;
 
 
 typedef struct s_player {
@@ -50,6 +76,7 @@ typedef struct s_utils
 
 typedef struct s_mlx_helper
 {
+    t_sprite *sprit;
     t_utils *utils;
     t_player *player;
     double dist_to_wall;
@@ -107,5 +134,6 @@ void extract_and_pars_the_texture(t_utils *util, char **file);
 void	*ft_memcpy(void *dest, const void *src, size_t n);
 int	ft_isdigit(int c);
 int check_hit(t_mlx_helper *mlx);
+void clear_img(t_mlx_helper *mlx);
 
 #endif

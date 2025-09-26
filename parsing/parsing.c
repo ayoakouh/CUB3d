@@ -6,7 +6,7 @@
 /*   By: ayoakouh <ayoakouh@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/18 17:56:36 by ayoakouh          #+#    #+#             */
-/*   Updated: 2025/09/21 16:52:47 by ayoakouh         ###   ########.fr       */
+/*   Updated: 2025/09/26 14:39:09 by ayoakouh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@ void rotate_right(t_mlx_helper *mlx, t_player *player)
     double old_dirx;
     double old_planex;
     double speed_rot;
+    int drawEnd;
+    int drawStart;
 
     speed_rot = -0.1; // Negative for right rotation
     old_dirx = player->dir_x;
@@ -32,23 +34,23 @@ void    raycast(t_mlx_helper *mlx_utils, t_utils *utils, t_player *player)
     int x = 0;
     int y = 0;
     int side = 0;
-    // clear_img(mlx_utils);
+    clear_img(mlx_utils);
     while(x < SCREEN_WIDTH)
     {
-        player->camera_x = 2 * x / SCREEN_WIDTH - 1;
+        player->camera_x = 2 * x / (double)SCREEN_WIDTH - 1;
         player->raydir_x = player->dir_x + player->plane_x * player->camera_x;
         player->raydir_y = player->dir_y + player->plane_y * player->camera_x;
         player->mapX = (int)player->pos_x;
         player->mapY = (int)player->pos_y;
         if(player->raydir_x == 0)
-            player->deltaX = 1e30;
+            player->deltaX = 999999999999999999;
         else
-            player->deltaX = fabs(1 / player->raydir_x);
+            player->deltaX = fabs(1.0 / player->raydir_x);
         
         if(player->raydir_y == 0)
-            player->deltaY = 1e30;
+            player->deltaY = 999999999999999999;
         else
-            player->deltaY = fabs(1 / player->raydir_y);
+            player->deltaY = fabs(1.0 / player->raydir_y);
         if(player->raydir_x < 0)
         {
             mlx_utils->stepX = -1;
@@ -74,18 +76,25 @@ void    raycast(t_mlx_helper *mlx_utils, t_utils *utils, t_player *player)
             mlx_utils->dist_to_wall = mlx_utils->dist_rayX - player->deltaX;
         else
             mlx_utils->dist_to_wall = mlx_utils->dist_rayY - player->deltaY;
-    int lineHeight = (int)(SCREEN_HEIGHT / mlx_utils->dist_to_wall);
-    int drawStart = -lineHeight / 2 + SCREEN_HEIGHT / 2;
-    int drawEnd = lineHeight / 2 + SCREEN_HEIGHT / 2;
-    if(drawStart < 0) drawStart = 0;
-    if(drawEnd >= SCREEN_HEIGHT) drawEnd = SCREEN_HEIGHT - 1;
-    
-    for(int y = drawStart; y < drawEnd; y++) {
-        mlx_put_pixel(mlx_utils->img, x, y, 0xFFFFFF);
+        int lineHeight = (int)(SCREEN_HEIGHT / mlx_utils->dist_to_wall);
+        int drawStart = -lineHeight / 2 + SCREEN_HEIGHT / 2;
+        int drawEnd = lineHeight / 2 + SCREEN_HEIGHT / 2;
+        if(drawStart < 0) drawStart = 0;
+        if(drawEnd >= SCREEN_HEIGHT) drawEnd = SCREEN_HEIGHT - 1;
+        
+        for(int y = drawStart; y < drawEnd; y++) {
+            mlx_put_pixel(mlx_utils->img, x, y, 0xFFFFFF);
+        }
+           for (int y = drawEnd; y < SCREEN_HEIGHT; y++) 
+           { //draw floor;
+                mlx_put_pixel(mlx_utils->img, x, y, 0xFF000080);
+            }
+             //draw celing
+                for (int y = 0; y < drawStart; y++) {
+            mlx_put_pixel(mlx_utils->img, x, y, 0xFFF0000);
+        }
+            x++;
     }
-        x++;
-    }
-    // printf("%f\n", mlx_utils->dist_to_wall);
 }   
 
 void rotate_left(t_mlx_helper *mlx, t_player *player)
@@ -115,8 +124,8 @@ void move_left(t_player *player, char **map, t_mlx_helper *mlx)
     if (map[(int)new_y][(int)player->pos_x] != '1')
         player->pos_y = new_y;
         
-    mlx->mlx_img->instances[0].x = (int)(player->pos_x * mlx->tail);
-    mlx->mlx_img->instances[0].y = (int)(player->pos_y * mlx->tail);
+    // mlx->mlx_img->instances[0].x = (int)(player->pos_x * mlx->tail);
+    // mlx->mlx_img->instances[0].y = (int)(player->pos_y * mlx->tail);
 }
 
 void move_right(t_player *player, char **map, t_mlx_helper *mlx)
@@ -266,7 +275,7 @@ void draw_player(t_mlx_helper *mlx, t_player *player)
         x = 0;
         while (x < 16)
         {
-            mlx_put_pixel(mlx->mlx_img, x, y, 0x43ff64cf);
+            mlx_put_pixel(mlx->img, x, y, 0x43ff64cf);
             x++;
         }
         y++;
@@ -276,12 +285,12 @@ void clear_img(t_mlx_helper *mlx)
 {
     int x = 0;
     int y = 0;
-    while(y < 16)
+    while(y < SCREEN_HEIGHT)
     {
         x = 0;
-        while (x < 16)
+        while (x < SCREEN_WIDTH)
         {
-            mlx_put_pixel(mlx->mlx_img, x, y, 0x00000000);
+            mlx_put_pixel(mlx->img, x, y, 0x000000);
             x++;
         }
         y++;
@@ -293,7 +302,7 @@ void move_forward(t_player *player, char **map, t_mlx_helper *mlx)
     double new_x;
     double new_y;
 
-    player->move_speed = 0.1;
+    player->move_speed = 0.5;
 
     new_x = player->pos_x + player->dir_x * player->move_speed;
     new_y = player->pos_y + player->dir_y * player->move_speed;
@@ -302,29 +311,7 @@ void move_forward(t_player *player, char **map, t_mlx_helper *mlx)
         player->pos_x = new_x;
     if (map[(int)new_y][(int)player->pos_x] != '1')
         player->pos_y = new_y;
-    mlx->mlx_img->instances[0].x = (int)(player->pos_x * mlx->tail);
-    mlx->mlx_img->instances[0].y = (int)(player->pos_y * mlx->tail);
 }
-
-// void move_forward(t_player *player, char **map, t_mlx_helper *mlx)
-// {
-//     double new_x = 0;
-//     double new_y = 0;
-//     int y = 0;
-//     int x = 0;
-//     player->move_speed = 0.5;
-//     new_x = player->pos_x + player->dir_x * player->move_speed;
-//     new_y = player->pos_y + player->dir_y * player->move_speed;
-//     if(map[(int)player->pos_y][(int)new_x] != '1')
-//         player->pos_x = new_x;
-//     puts("00000");
-//     if(map[(int)new_y][(int)player->pos_x] != '1')
-//         player->pos_y = new_y;
-//     clear_img(mlx);
-//     draw_map(mlx->utils, mlx);
-//     draw_player(mlx, player);
-//     mlx_image_to_window(mlx->mlx_ptr,mlx->mlx_img, new_x * mlx->tail, new_y * mlx->tail);
-// }
 
 void move_back(t_player *player, char **map, t_mlx_helper *mlx)
 {
@@ -335,26 +322,7 @@ void move_back(t_player *player, char **map, t_mlx_helper *mlx)
 
     if(map[(int)new_y][(int)player->pos_x] != '1')
         player->pos_y = new_y;
-    mlx->mlx_img->instances[0].x = (int)(player->pos_x * mlx->tail);
-    mlx->mlx_img->instances[0].y = (int)(player->pos_y * mlx->tail);
 }
-// void *handel_key( mlx_key_data_t keydata,void *param)
-// {
-//     t_mlx_helper *mlx = (t_mlx_helper *)param;
-//     if(keydata.action == MLX_PRESS)
-//     {
-//         if(keydata.key == MLX_KEY_W)
-//             move_forward(mlx->player, mlx->utils->map, mlx);
-//         if(keydata.key == MLX_KEY_S)
-//             move_back(mlx->player, mlx->utils->map, mlx);
-//         if(keydata.key == MLX_KEY_A)
-//             move_left(mlx->player, mlx->utils->map, mlx);
-//         if(keydata.key == MLX_KEY_D)
-//             move_right(mlx->player, mlx->utils->map, mlx);
-//         raycast(mlx, mlx->utils, mlx->player);
-//     }
-//         return NULL;
-// }
 
 void *handel_key(mlx_key_data_t keydata, void *param)
 {
@@ -371,18 +339,15 @@ void *handel_key(mlx_key_data_t keydata, void *param)
         if(keydata.key == MLX_KEY_D)
             move_right(mlx->player, mlx->utils->map, mlx);
         
-        // Add rotation controls
         if(keydata.key == MLX_KEY_LEFT)
-            rotate_left(mlx, mlx->player);
-        if(keydata.key == MLX_KEY_RIGHT)
             rotate_right(mlx, mlx->player);
-            
-        // Clear the image before redrawing
-        // clear_img(mlx); // Uncomment if you have a proper clear function
-        
+        if(keydata.key == MLX_KEY_RIGHT)
+            rotate_left(mlx, mlx->player);
+        if (keydata.key == MLX_KEY_ESCAPE)
+            exit(0);       
         raycast(mlx, mlx->utils, mlx->player);
     }
-    return NULL;
+    return (NULL);
 }
 int check_hit(t_mlx_helper *mlx)
 {
@@ -405,9 +370,46 @@ int check_hit(t_mlx_helper *mlx)
         if(mlx->utils->map[mlx->player->mapY][mlx->player->mapX] == '1')
             hit = 1;
     }
+    // printf("%c\n", mlx->utils->map[mlx->player->mapY][mlx->player->mapX]);
     return (side);
 }
 
+void game_loop(void *param)
+{
+    t_mlx_helper *mlx = (t_mlx_helper *)param;
+
+    clear_img(mlx);
+    raycast(mlx, mlx->utils, mlx->player);
+}
+
+void update_animation(t_sprite *anim)
+{
+    if (!anim)
+        return;
+
+    double now = mlx_get_time();
+    if (now - anim->last_frame_time >= 0.2) // 0.2 sec per frame
+    {
+        anim->current_frame++;
+        if (anim->current_frame >= FIRE_FRAMES)
+            anim->current_frame = 0;
+        anim->last_frame_time = now; // store the current time
+    }
+}
+
+
+void animation_loop(void *param)
+{
+    t_mlx_helper *mlx = (t_mlx_helper *)param;
+
+    update_animation(mlx->sprit); // animate sprite
+
+    // Draw current frame on top of the scene
+    mlx_image_to_window(mlx->mlx_ptr,
+        mlx->sprit->images[mlx->sprit->current_frame],
+        (SCREEN_WIDTH - mlx->sprit->images[0]->width) / 2,
+        SCREEN_HEIGHT - mlx->sprit->images[0]->height);
+}
 int main(int argc, char *argv[])
 {
 
@@ -415,6 +417,7 @@ int main(int argc, char *argv[])
     t_mlx_helper    *mlx_utils;
     t_player        player;
     char            helper;
+    t_sprite        *sprit;
     
 
     mlx_utils = malloc(sizeof(t_mlx_helper));
@@ -444,7 +447,28 @@ int main(int argc, char *argv[])
     (int)player.pos_y * mlx_utils->tail);
     check_derction_player(&player, helper);
     raycast(mlx_utils, util, &player);
+    sprit = malloc(sizeof(t_sprite));
+    mlx_utils->sprit = sprit;
+    sprit->frame_delay = 10;
+    sprit->frame_counter = 0;
+    sprit->current_frame = 0;
+    sprit->frames[0] = mlx_load_xpm42("parsing/alexander-berezin-sa-demonic-72-_dragged_.xpm42");
+    sprit->frames[1] = mlx_load_xpm42("parsing/alexander-berezin-sa-demonic-47-_dragged_.xpm42");
+    sprit->frames[2] = mlx_load_xpm42("parsing/alexander-berezin-sa-demonic-24-_dragged_.xpm42");
+    sprit->frames[3] = mlx_load_xpm42("parsing/alexander-berezin-sa-demonic-23-_dragged_.xpm42");
+    sprit->frames[4] = mlx_load_xpm42("parsing/alexander-berezin-sa-demonic-11-_dragged_.xpm42");
+    int i = 0;
+    while(i < FIRE_FRAMES)
+    {
+        sprit->images[i] = mlx_texture_to_image(mlx_utils->mlx_ptr, &sprit->frames[i]->texture);
+        i++;
+    }
+    update_animation(sprit);
+    printf("%d\n", sprit->current_frame);
+    // mlx_get_time();
+    // mlx_image_to_window(mlx_utils->mlx_ptr, sprit->images[sprit->current_frame], (SCREEN_WIDTH - sprit->images[sprit->current_frame]->width) / 2, SCREEN_HEIGHT - sprit->images[sprit->current_frame]->height);
     mlx_key_hook(mlx_utils->mlx_ptr, handel_key, mlx_utils);
+    mlx_loop_hook(mlx_utils->mlx_ptr, animation_loop, mlx_utils);
     mlx_loop( mlx_utils->mlx_ptr);
 }
 
